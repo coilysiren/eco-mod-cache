@@ -38,7 +38,7 @@ namespace Eco.Mods.TechTree
         public override int                 FullRepairAmount => 15;
 
         //Set this to the desired value you would like the shovels to pick up
-        public override int MaxTake => 10;
+        public override int MaxTake => 80;
 
         public ModernBigShovelItem() { }
     }
