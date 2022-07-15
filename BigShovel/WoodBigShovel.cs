@@ -25,18 +25,22 @@ namespace Eco.Mods.TechTree
     public partial class WoodenBigShovelItem : BigShovelItem
     {
         // Static values
-        private static IDynamicValue    caloriesBurn        = new MultiDynamicValue(MultiDynamicOps.Multiply, new TalentModifiedValue(typeof(WoodenBigShovelItem), typeof(ToolEfficiencyTalent)), CreateCalorieValue(20, typeof(SelfImprovementSkill), typeof(WoodenBigShovelItem)));
-        private static IDynamicValue    tier                = new ConstantValue(1);
-        private static IDynamicValue    skilledRepairCost   = new ConstantValue(5);
+        private static IDynamicValue caloriesBurn = new MultiDynamicValue(
+            MultiDynamicOps.Multiply,
+            new TalentModifiedValue(typeof(WoodenBigShovelItem), typeof(ToolEfficiencyTalent)),
+            CreateCalorieValue(20, typeof(SelfImprovementSkill), typeof(WoodenBigShovelItem))
+        );
+        private static IDynamicValue tier = new ConstantValue(1);
+        private static IDynamicValue skilledRepairCost = new ConstantValue(5);
 
         // Tool overrides
-        public override IDynamicValue   CaloriesBurn        => caloriesBurn;
-        public override IDynamicValue   Tier                => tier;
-        public override IDynamicValue   SkilledRepairCost   => skilledRepairCost;
-        public override float           DurabilityRate      => DurabilityMax / 100f;
-        public override Item            RepairItem          => Item.Get<Item>();
-        public override Tag             RepairTag           => TagManager.Tag("Wood");
-        public override int             FullRepairAmount    => 5;
+        public override IDynamicValue CaloriesBurn => caloriesBurn;
+        public override IDynamicValue Tier => tier;
+        public override IDynamicValue SkilledRepairCost => skilledRepairCost;
+        public override float DurabilityRate => DurabilityMax / 100f;
+        public override Item RepairItem => Item.Get<Item>();
+        public override Tag RepairTag => TagManager.Tag("Wood");
+        public override int FullRepairAmount => 5;
 
         //Set this to the desired value you would like the shovels to pick up
         public override int MaxTake => 10;
@@ -47,20 +51,17 @@ namespace Eco.Mods.TechTree
     public partial class WoodenBigShovelRecipe : RecipeFamily
     {
         public WoodenBigShovelRecipe()
-        {         
+        {
             this.Recipes = new List<Recipe>
             {
                 new Recipe(
                     "WoodenBigShovel",
                     Localizer.DoStr("Wooden Big Shovel"),
-                    new IngredientElement[]
-                    {
-               new IngredientElement("Wood", 30),   
-                    },
-                new CraftingElement<WoodenBigShovelItem>()
+                    new IngredientElement[] { new IngredientElement("Wood", 30), },
+                    new CraftingElement<WoodenBigShovelItem>()
                 )
             };
-            this.LaborInCalories = CreateLaborInCaloriesValue(10); 
+            this.LaborInCalories = CreateLaborInCaloriesValue(10);
             this.CraftMinutes = CreateCraftTimeValue(0.5f);
             this.Initialize(Localizer.DoStr("Wooden Big Shovel"), typeof(WoodenBigShovelRecipe));
             CraftingComponent.AddRecipe(typeof(ToolBenchObject), this);

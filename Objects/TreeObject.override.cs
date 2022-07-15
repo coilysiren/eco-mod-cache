@@ -34,16 +34,28 @@ using Eco.Gameplay.Civics;
 [Serialized]
 class TrunkPiece
 {
-    [Serialized] public Guid ID;
-    [Serialized] public float SliceStart;
-    [Serialized] public float SliceEnd;
+    [Serialized]
+    public Guid ID;
+
+    [Serialized]
+    public float SliceStart;
+
+    [Serialized]
+    public float SliceEnd;
 
     public double LastUpdateTime;
-    [Serialized] public Vector3 Position;
-    [Serialized] public Vector3 Velocity;
-    [Serialized] public Quaternion Rotation;
 
-    [Serialized] public bool Collected;
+    [Serialized]
+    public Vector3 Position;
+
+    [Serialized]
+    public Vector3 Velocity;
+
+    [Serialized]
+    public Quaternion Rotation;
+
+    [Serialized]
+    public bool Collected;
 
     public BSONObject ToUpdateBson()
     {
@@ -51,7 +63,7 @@ class TrunkPiece
         bson["id"] = this.ID;
         bson["pos"] = this.Position;
         bson["rot"] = this.Rotation;
-        bson["v"]   = this.Velocity;
+        bson["v"] = this.Velocity;
         return bson;
     }
 
@@ -63,7 +75,7 @@ class TrunkPiece
         bson["end"] = this.SliceEnd;
         bson["pos"] = this.Position;
         bson["rot"] = this.Rotation;
-        bson["v"]   = this.Velocity;
+        bson["v"] = this.Velocity;
         bson["collected"] = this.Collected;
         return bson;
     }
@@ -76,32 +88,51 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
     readonly object sync = new();
 
     public static float DamageExperienceMultiplier = 1f;
+
     // This needs to be 5, because 5 is the max yield bonus, and 5+5=10 is the max log stack size
     private const int MaxTrunkPickupSize = 5;
+
     // Max number of tree debris spawn from the tree
     private const int MaxTreeDebris = 20;
     public LocString Category => Localizer.DoStr("Trees");
 
-    public int IconID { get { return 0; } }
+    public int IconID
+    {
+        get { return 0; }
+    }
 
-    [Serialized] public Quaternion Rotation { get; protected set; }
+    [Serialized]
+    public Quaternion Rotation { get; protected set; }
 
     // the list of all the slices done to this trunk
-    [Serialized] readonly ThreadSafeList<TrunkPiece> trunkPieces = new ThreadSafeList<TrunkPiece>();
+    [Serialized]
+    readonly ThreadSafeList<TrunkPiece> trunkPieces = new ThreadSafeList<TrunkPiece>();
 
     public override bool UpRooted => this.stumpHealth <= 0;
 
     public override float SaplingGrowthPercent => 0.3f;
 
     // estimated, need to get better measurements w/ and w/o Top branch
-    private static readonly float[] GrowthThresholds = new float[7] { 0.20f, 0.28f, 0.38f, 0.48f, 0.57f, 0.78f, 0.95f };
+    private static readonly float[] GrowthThresholds = new float[7]
+    {
+        0.20f,
+        0.28f,
+        0.38f,
+        0.48f,
+        0.57f,
+        0.78f,
+        0.95f
+    };
     private int currentGrowthThreshold = 0;
     private int treeDebrisSpawned; // it is runtime variable, it shouldn't spawn from felt trees so should be fine, but even if hacked someway it will produce at max 10 debris after restart
 
     public double LastUpdateTime { get; private set; }
     float lastKeyframeTime;
 
-    public override IEnumerable<Vector3> TrunkPositions { get { return this.trunkPieces.Where(x => !x.Collected).Select(x => x.Position); } }
+    public override IEnumerable<Vector3> TrunkPositions
+    {
+        get { return this.trunkPieces.Where(x => !x.Collected).Select(x => x.Position); }
+    }
 
     private ThreadSafeHashSet<Vector3i> groundHits;
 
@@ -121,12 +152,16 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
         {
             if (this.Fallen || this.GrowthPercent >= 1f)
                 return true;
-            if ((this.currentGrowthThreshold >= GrowthThresholds.Length) // already at max occupied spaces
-                || this.GrowthPercent < GrowthThresholds[this.currentGrowthThreshold])
+            if (
+                (this.currentGrowthThreshold >= GrowthThresholds.Length) // already at max occupied spaces
+                || this.GrowthPercent < GrowthThresholds[this.currentGrowthThreshold]
+            )
                 return false;
-            var block = World.GetBlock(this.Position.XYZi + (Vector3i.Up * (this.currentGrowthThreshold + 1)));
+            var block = World.GetBlock(
+                this.Position.XYZi + (Vector3i.Up * (this.currentGrowthThreshold + 1))
+            );
             if (!block.Is<Empty>() && block.GetType() != this.Species.BlockType)
-                    return true; // can't grow until obstruction is removed
+                return true; // can't grow until obstruction is removed
             return false;
         }
     }
@@ -134,42 +169,72 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
     public override float GrowthPercent
     {
         get => base.GrowthPercent;
-        set { base.GrowthPercent = Mathf.Clamp01(value); this.UpdateGrowthOccupancy(); }
+        set
+        {
+            base.GrowthPercent = Mathf.Clamp01(value);
+            this.UpdateGrowthOccupancy();
+        }
     }
 
     private void UpdateGrowthOccupancy()
     {
-        while (this.Species != null && !this.Fallen && this.currentGrowthThreshold < GrowthThresholds.Length && this.GrowthPercent >= GrowthThresholds[this.currentGrowthThreshold])
+        while (
+            this.Species != null
+            && !this.Fallen
+            && this.currentGrowthThreshold < GrowthThresholds.Length
+            && this.GrowthPercent >= GrowthThresholds[this.currentGrowthThreshold]
+        )
         {
-            var block = World.GetBlock(this.Position.XYZi + (Vector3i.Up * (this.currentGrowthThreshold + 1)));
+            var block = World.GetBlock(
+                this.Position.XYZi + (Vector3i.Up * (this.currentGrowthThreshold + 1))
+            );
             if (!block.Is<Empty>() && block.GetType() != this.Species.BlockType)
             {
                 base.GrowthPercent = GrowthThresholds[this.currentGrowthThreshold] - 0.01f;
                 return; // cap growth at slightly less than threshold, can't grow until obstruction is removed
             }
             this.currentGrowthThreshold++;
-            World.SetBlock(this.Species.BlockType, this.Position.XYZi + (Vector3i.Up * this.currentGrowthThreshold));
+            World.SetBlock(
+                this.Species.BlockType,
+                this.Position.XYZi + (Vector3i.Up * this.currentGrowthThreshold)
+            );
         }
     }
 
-    private bool CanHarvest => this.branches.None(branch => branch != null && branch.Health > 0f);  // can't harvest if any branches are still alive
+    private bool CanHarvest => this.branches.None(branch => branch != null && branch.Health > 0f); // can't harvest if any branches are still alive
 
     public INetObjectViewer Controller { get; private set; }
 
     #region IInteractable interface
-    public float InteractDistance { get { return 2.0f; } }
+    public float InteractDistance
+    {
+        get { return 2.0f; }
+    }
 
     private bool CanPickup(TrunkPiece trunk)
     {
         return true;
     }
 
-    private float ResourceMultiplier => (this.Species.ResourceRange.Diff * this.GrowthPercent) + this.Species.ResourceRange.Min;
+    private float ResourceMultiplier =>
+        (this.Species.ResourceRange.Diff * this.GrowthPercent) + this.Species.ResourceRange.Min;
 
-    private int GetBasePickupSize(TrunkPiece trunk) => Math.Max(Mathf.RoundUpToInt((trunk.SliceEnd - trunk.SliceStart) * this.ResourceMultiplier), 1);
+    private int GetBasePickupSize(TrunkPiece trunk) =>
+        Math.Max(
+            Mathf.RoundUpToInt((trunk.SliceEnd - trunk.SliceStart) * this.ResourceMultiplier),
+            1
+        );
 
-    public InteractResult OnActLeft(InteractionContext context) { return InteractResult.NoOp; }
-    public InteractResult OnActRight(InteractionContext context) { return InteractResult.NoOp; }
+    public InteractResult OnActLeft(InteractionContext context)
+    {
+        return InteractResult.NoOp;
+    }
+
+    public InteractResult OnActRight(InteractionContext context)
+    {
+        return InteractResult.NoOp;
+    }
+
     public InteractResult OnPreInteractionPass(InteractionContext context) => InteractResult.NoOp;
 
     public InteractResult OnActInteract(InteractionContext context)
@@ -189,7 +254,10 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
     #endregion
 
     #region IMinimapObject interface
-    public string DisplayName { get { return this.Species.DisplayName; } }
+    public string DisplayName
+    {
+        get { return this.Species.DisplayName; }
+    }
 
     public float MinimapYaw
     {
@@ -199,19 +267,20 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
             return (2.0f * Mathf.PI) * ((float)Math.Round(rand.NextDouble() * 4.0f) / 4.0f);
         }
     }
-    public string SubTitle { get { return string.Empty; } }
+    public string SubTitle
+    {
+        get { return string.Empty; }
+    }
 
     //False so it will create toggle at minimap ui to switch trees icons
     public bool IsOverlayObject => false;
     #endregion
 
     public TreeEntity(TreeSpecies species, WorldPosition3i position, PlantPack plantPack)
-        : base(species, position, plantPack)
-    { }
+        : base(species, position, plantPack) { }
 
     // needed for serialization
-    protected TreeEntity()
-    { }
+    protected TreeEntity() { }
 
     public override void Initialize()
     {
@@ -232,8 +301,6 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
     {
         lock (this.sync)
         {
-            
-
             TrunkPiece trunk;
             trunk = this.trunkPieces.FirstOrDefault(p => p.ID == logID);
             if (trunk != null && trunk.Collected == false)
@@ -241,36 +308,77 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
                 // check log size, if its too big, it can't be picked up
                 if (!this.CanPickup(trunk))
                 {
-                    player.ErrorLocStr("Log is too large to pick up, slice into smaller pieces first.");
+                    player.ErrorLocStr(
+                        "Log is too large to pick up, slice into smaller pieces first."
+                    );
                     return;
                 }
 
                 var resourceType = this.Species.ResourceItemType;
-                var resource     = Item.Get(resourceType);
-                var baseCount    = this.GetBasePickupSize(trunk);
-                var yield        = resource.Yield;
-                var bonusItems   = yield?.GetCurrentValueInt(player.User.DynamicValueContext, null) ?? 0;
-                var numItems     = baseCount + bonusItems;
-                var carried      = player.User.Inventory.Carried;
+                var resource = Item.Get(resourceType);
+                var baseCount = this.GetBasePickupSize(trunk);
+                var yield = resource.Yield;
+                var bonusItems =
+                    yield?.GetCurrentValueInt(player.User.DynamicValueContext, null) ?? 0;
+                var numItems = baseCount + bonusItems;
+                var carried = player.User.Inventory.Carried;
 
                 if (numItems > 0)
                 {
                     if (!carried.IsEmpty) // Early tests: neeed to check type mismatch and max quantity.
-                    { 
-                        if      (carried.Stacks.First().Item.Type != resourceType)                    { player.Error(Localizer.Format("You are already carrying {0:items} and cannot pick up {1:items}.", carried.Stacks.First().Item.UILink(StackLinkType.ShowPlural), resource.UILink(StackLinkType.ShowPlural)));  return; }                        
-                        else if (carried.Stacks.First().Quantity + numItems > resource.MaxStackSize)  { player.Error(Localizer.Format("You can't carry {0:n0} more {1:items} ({2} max).", numItems, resource.UILink(numItems != 1 ? StackLinkType.ShowPlural : 0), resource.MaxStackSize));                           return; } 
+                    {
+                        if (carried.Stacks.First().Item.Type != resourceType)
+                        {
+                            player.Error(
+                                Localizer.Format(
+                                    "You are already carrying {0:items} and cannot pick up {1:items}.",
+                                    carried.Stacks.First().Item.UILink(StackLinkType.ShowPlural),
+                                    resource.UILink(StackLinkType.ShowPlural)
+                                )
+                            );
+                            return;
+                        }
+                        else if (carried.Stacks.First().Quantity + numItems > resource.MaxStackSize)
+                        {
+                            player.Error(
+                                Localizer.Format(
+                                    "You can't carry {0:n0} more {1:items} ({2} max).",
+                                    numItems,
+                                    resource.UILink(numItems != 1 ? StackLinkType.ShowPlural : 0),
+                                    resource.MaxStackSize
+                                )
+                            );
+                            return;
+                        }
                     }
 
                     // Prepare a game action pack.
                     var pack = new GameActionPack();
-                        pack.AddPostEffect          (() => { trunk.Collected = true; this.RPC("DestroyLog", logID); this.MarkDirty(); this.CheckDestroy(); });  // Delete the log if succseeded.
-                        pack.GetOrCreateInventoryChangeSet   (carried, player.User).AddItems(this.Species.ResourceItemType, numItems);                                   // Add items to the changeset.
-                        pack.AddGameAction          (new HarvestOrHunt() {   Species            = this.Species.GetType(),                                       // Create a game action.
-                                                                             HarvestedStacks    = new ItemStack(Item.Get(this.Species.ResourceItemType), numItems).SingleItemAsEnumerable(),
-                                                                             ActionLocation           = this.Position.XYZi,
-                                                                             Citizen            = player.User,
-                                                                             DamagedOrDestroyed = !this.Ripe ? DamagedOrDestroyed.DestroyingOrganism : DamagedOrDestroyed.NotDestroyingOrganism});                    
-                        pack.TryPerform(); // Try to perform the action and apply changes & effects.
+                    pack.AddPostEffect(() =>
+                    {
+                        trunk.Collected = true;
+                        this.RPC("DestroyLog", logID);
+                        this.MarkDirty();
+                        this.CheckDestroy();
+                    }); // Delete the log if succseeded.
+                    pack.GetOrCreateInventoryChangeSet(carried, player.User)
+                        .AddItems(this.Species.ResourceItemType, numItems); // Add items to the changeset.
+                    pack.AddGameAction(
+                        new HarvestOrHunt()
+                        {
+                            Species = this.Species.GetType(), // Create a game action.
+                            HarvestedStacks = new ItemStack(
+                                Item.Get(this.Species.ResourceItemType),
+                                numItems
+                            ).SingleItemAsEnumerable(),
+                            ActionLocation = this.Position.XYZi,
+                            Citizen = player.User,
+                            DamagedOrDestroyed = !this.Ripe
+                                ? DamagedOrDestroyed.DestroyingOrganism
+                                : DamagedOrDestroyed.NotDestroyingOrganism
+                        }
+                    );
+                    pack.TryPerform(); // Try to perform the action and apply changes & effects.
                 }
             }
         }
@@ -306,44 +414,50 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
         this.MarkDirty();
     }
 
-    TrunkPiece GetTrunkPiece(float slicePoint) => this.trunkPieces.FirstOrDefault(p => p.SliceStart < slicePoint && p.SliceEnd > slicePoint);
+    TrunkPiece GetTrunkPiece(float slicePoint) =>
+        this.trunkPieces.FirstOrDefault(p => p.SliceStart < slicePoint && p.SliceEnd > slicePoint);
 
     private Result TrySliceTrunk(InteractionContext context)
     {
         lock (this.sync) // prevent threading issues due to multiple choppers
         {
-            var player     = context.Player;
+            var player = context.Player;
             var slicePoint = context.Parameters?["slice"].FloatValue ?? 0f;
 
             // find the trunk piece this is coming from
             var target = this.GetTrunkPiece(slicePoint);
-            if (target == null) return Result.FailedNoMessage;
+            if (target == null)
+                return Result.FailedNoMessage;
 
             // if this is a tiny slice, clamp to the nearest valid size
             const float minPieceResources = 5f;
-            var         minPieceSize      = minPieceResources / this.ResourceMultiplier;
-            var         targetSize        = target.SliceEnd - target.SliceStart;
-            var         targetResources   = targetSize * this.ResourceMultiplier;
-            var         newPieceSize      = target.SliceEnd - slicePoint;
-            var         newPieceResources = newPieceSize * this.ResourceMultiplier;
-            if (targetResources <= minPieceResources) return Result.FailLocStr("This log cannot be sliced any smaller"); // can't slice, too small
+            var minPieceSize = minPieceResources / this.ResourceMultiplier;
+            var targetSize = target.SliceEnd - target.SliceStart;
+            var targetResources = targetSize * this.ResourceMultiplier;
+            var newPieceSize = target.SliceEnd - slicePoint;
+            var newPieceResources = newPieceSize * this.ResourceMultiplier;
+            if (targetResources <= minPieceResources)
+                return Result.FailLocStr("This log cannot be sliced any smaller"); // can't slice, too small
 
-            if (targetResources < (2 * minPieceResources))           slicePoint = target.SliceStart + (.5f * targetSize);   // if smaller than 2x the min size, slice directly in half
-            else if (newPieceSize < minPieceSize)                    slicePoint = target.SliceEnd - minPieceSize;           // round down to nearest slice point where the resulting block will be the size of the log
-            else if (slicePoint - target.SliceStart <= minPieceSize) slicePoint = target.SliceStart + minPieceSize;         // round up
+            if (targetResources < (2 * minPieceResources))
+                slicePoint = target.SliceStart + (.5f * targetSize); // if smaller than 2x the min size, slice directly in half
+            else if (newPieceSize < minPieceSize)
+                slicePoint = target.SliceEnd - minPieceSize; // round down to nearest slice point where the resulting block will be the size of the log
+            else if (slicePoint - target.SliceStart <= minPieceSize)
+                slicePoint = target.SliceStart + minPieceSize; // round up
 
             var sourceID = target.ID;
             // slice and assign new IDs (New piece is always the back end of the source piece)
             var newPiece = new TrunkPiece()
             {
-                ID         = Guid.NewGuid(),
+                ID = Guid.NewGuid(),
                 SliceStart = slicePoint,
-                SliceEnd   = target.SliceEnd,
-                Position   = target.Position,
-                Rotation   = target.Rotation,
+                SliceEnd = target.SliceEnd,
+                Position = target.Position,
+                Rotation = target.Rotation,
             };
             this.trunkPieces.Add(newPiece);
-            target.ID       = Guid.NewGuid();
+            target.ID = Guid.NewGuid();
             target.SliceEnd = slicePoint;
 
             // ensure the pieces are listed in order
@@ -390,7 +504,10 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
                 if (!aboveblock.Is<Solid>())
                 {
                     // turn soil into dirt
-                    if (hitblock.GetType() == typeof(GrassBlock) || hitblock.GetType() == typeof(ForestSoilBlock))
+                    if (
+                        hitblock.GetType() == typeof(GrassBlock)
+                        || hitblock.GetType() == typeof(ForestSoilBlock)
+                    )
                     {
                         player.SpawnBlockEffect(offsetpos, typeof(DirtBlock), BlockEffect.Delete);
                         World.SetBlock<DirtBlock>(offsetpos);
@@ -404,47 +521,75 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
                         var plant = EcoSim.PlantSim.GetPlant(abovepos);
                         if (plant != null)
                         {
-                            player.SpawnBlockEffect(abovepos, aboveblock.GetType(), BlockEffect.Delete);
-                            EcoSim.PlantSim.DestroyPlant(plant, DeathType.Logging, true, player.User);
+                            player.SpawnBlockEffect(
+                                abovepos,
+                                aboveblock.GetType(),
+                                BlockEffect.Delete
+                            );
+                            EcoSim.PlantSim.DestroyPlant(
+                                plant,
+                                DeathType.Logging,
+                                true,
+                                player.User
+                            );
                         }
-                        else World.DeleteBlock(abovepos);
+                        else
+                            World.DeleteBlock(abovepos);
                     }
 
-                    if (hitblock.Is<Solid>() && World.GetBlock(abovepos).Is<Empty>() && RandomUtil.Value < this.Species.ChanceToSpawnDebris)
+                    if (
+                        hitblock.Is<Solid>()
+                        && World.GetBlock(abovepos).Is<Empty>()
+                        && RandomUtil.Value < this.Species.ChanceToSpawnDebris
+                    )
                     {
-                        GameActionAccumulator.Obj.AddGameActions(new CreateTreeDebris()
-                        {
-                            Count = 1,
-                            ActionLocation = abovepos,
-                            Citizen = player.User
-                        }, player?.User);
-						
+                        GameActionAccumulator.Obj.AddGameActions(
+                            new CreateTreeDebris()
+                            {
+                                Count = 1,
+                                ActionLocation = abovepos,
+                                Citizen = player.User
+                            },
+                            player?.User
+                        );
+
                         World.SetBlock(this.Species.DebrisType, abovepos);
-                        player.SpawnBlockEffect(abovepos, this.Species.DebrisType, BlockEffect.Place);
+                        player.SpawnBlockEffect(
+                            abovepos,
+                            this.Species.DebrisType,
+                            BlockEffect.Place
+                        );
                         RoomData.QueueRoomTest(abovepos);
-                        if (Interlocked.Increment(ref this.treeDebrisSpawned) >= MaxTreeDebris) return;
+                        if (Interlocked.Increment(ref this.treeDebrisSpawned) >= MaxTreeDebris)
+                            return;
                     }
                 }
             }
     }
     #endregion
 
-    ChopTree CreateChopTreeAction(InteractionContext context, bool felled, bool branches = false) => new ChopTree()
-    {
-        Citizen          = context.Player?.User,
-        TreeSpecies      = this.Species.GetType(),
-        ActionLocation   = this.Position.XYZi,
-        AccessNeeded     = AccessType.FullAccess,
-        Felled           = felled,
-        BranchesTargeted = branches,
-        GrowthPercent    = this.GrowthPercent * 100,
-        ToolUsed         = context.SelectedItem
-    };
+    ChopTree CreateChopTreeAction(InteractionContext context, bool felled, bool branches = false) =>
+        new ChopTree()
+        {
+            Citizen = context.Player?.User,
+            TreeSpecies = this.Species.GetType(),
+            ActionLocation = this.Position.XYZi,
+            AccessNeeded = AccessType.FullAccess,
+            Felled = felled,
+            BranchesTargeted = branches,
+            GrowthPercent = this.GrowthPercent * 100,
+            ToolUsed = context.SelectedItem
+        };
 
     void FellTree(INetObject killer)
     {
         // create the initial trunk piece
-        var trunkPiece = new TrunkPiece() { ID = Guid.NewGuid(), SliceStart = 0f, SliceEnd = 1f,  };
+        var trunkPiece = new TrunkPiece()
+        {
+            ID = Guid.NewGuid(),
+            SliceStart = 0f,
+            SliceEnd = 1f,
+        };
 
         // clear tree occupancy
         if (this.Species.BlockType != null)
@@ -462,12 +607,12 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
         var player = killer as Player;
         if (player != null)
         {
-            this.SetPhysicsController(player);                                   // set the killing player's client as the one in control of the physics of the tree. Handled by "FellTree".
-            player.RPC("YellTimber");                                            // Issue sound effect.
+            this.SetPhysicsController(player); // set the killing player's client as the one in control of the physics of the tree. Handled by "FellTree".
+            player.RPC("YellTimber"); // Issue sound effect.
         }
 
-        this.RPC("FellTree", trunkPiece.ID, this.ResourceMultiplier);            // Fell the tree
-        Animal.AlertNearbyAnimals(this.Position, 15f);                           // Alert nearby animals to aware about falling tree
+        this.RPC("FellTree", trunkPiece.ID, this.ResourceMultiplier); // Fell the tree
+        Animal.AlertNearbyAnimals(this.Position, 15f); // Alert nearby animals to aware about falling tree
 
         // break off any branches that are young
         for (var branchID = 0; branchID < this.branches.Length; branchID++)
@@ -476,7 +621,11 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
             if (branch == null)
                 continue;
 
-            var branchAge = Mathf.Clamp01((float)((this.GrowthPercent - branch.SpawnAge) / (branch.MatureAge - branch.SpawnAge)));
+            var branchAge = Mathf.Clamp01(
+                (float)(
+                    (this.GrowthPercent - branch.SpawnAge) / (branch.MatureAge - branch.SpawnAge)
+                )
+            );
             if (branchAge <= .5f)
                 this.DestroyBranch(branchID);
         }
@@ -487,21 +636,40 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
         this.MarkDirty();
     }
 
-    public GameActionPack TryApplyDamage(GameActionPack pack, INetObject damager, float amount, InteractionContext context, Item tool, out float damageReceived, Type damageDealer = null, float experienceMultiplier = 1f)
+    public GameActionPack TryApplyDamage(
+        GameActionPack pack,
+        INetObject damager,
+        float amount,
+        InteractionContext context,
+        Item tool,
+        out float damageReceived,
+        Type damageDealer = null,
+        float experienceMultiplier = 1f
+    )
     {
         damageReceived = amount;
 
         // if the tree is really young, just outright uproot and destroy it.
-        if (this.IsSapling) return this.TryKillSapling(pack, damager, amount, context);
-        if (context.Parameters == null)                     return this.TryDamageUnfelledTree(pack, damager, amount, context);
-        if (context.Parameters.ContainsKey("stump"))        return this.TryDamageStump(pack, damager, amount, context);
-        if (context.Parameters.ContainsKey("branch"))       return this.TryDamageBranch(pack, damager, amount, context);
-        if (context.Parameters.ContainsKey("slice"))        return this.TryDamageTrunk(pack, damager, amount, context);
+        if (this.IsSapling)
+            return this.TryKillSapling(pack, damager, amount, context);
+        if (context.Parameters == null)
+            return this.TryDamageUnfelledTree(pack, damager, amount, context);
+        if (context.Parameters.ContainsKey("stump"))
+            return this.TryDamageStump(pack, damager, amount, context);
+        if (context.Parameters.ContainsKey("branch"))
+            return this.TryDamageBranch(pack, damager, amount, context);
+        if (context.Parameters.ContainsKey("slice"))
+            return this.TryDamageTrunk(pack, damager, amount, context);
         return pack;
     }
 
     /// <summary> Perform damaging healthy branches and trunk (if it's a fallen tree) </summary>
-    private GameActionPack TryDamageTrunk(GameActionPack pack, INetObject damager, float amount, InteractionContext context)
+    private GameActionPack TryDamageTrunk(
+        GameActionPack pack,
+        INetObject damager,
+        float amount,
+        InteractionContext context
+    )
     {
         // If there are still branches, damage them instead.
         for (var branchID = 0; branchID < this.branches.Length; branchID++)
@@ -510,39 +678,60 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
         // If the tree is fallen, damage it
         if (this.Fallen)
         {
-            pack.AddGameAction(new ChopTree
-            {
-                Citizen          = context.Player?.User,
-                TreeSpecies      = this.Species.GetType(),
-                ActionLocation   = this.Position.XYZi,
-                OnGround         = true,
-                AccessNeeded     = AccessType.FullAccess,
-                ToolUsed         = context.SelectedItem
-            });
+            pack.AddGameAction(
+                new ChopTree
+                {
+                    Citizen = context.Player?.User,
+                    TreeSpecies = this.Species.GetType(),
+                    ActionLocation = this.Position.XYZi,
+                    OnGround = true,
+                    AccessNeeded = AccessType.FullAccess,
+                    ToolUsed = context.SelectedItem
+                }
+            );
         }
         pack.AddPostEffect(() => this.TrySliceTrunk(context));
         return pack;
     }
 
-    private GameActionPack TryKillSapling(GameActionPack pack, INetObject damager, float amount, InteractionContext context)
+    private GameActionPack TryKillSapling(
+        GameActionPack pack,
+        INetObject damager,
+        float amount,
+        InteractionContext context
+    )
     {
         pack.AddGameAction(this.CreateChopTreeAction(context, true));
-        pack.AddPostEffect(() => EcoSim.PlantSim.DestroyPlant(this, DeathType.Harvesting, killer:damager is Player damagerPlayer ? damagerPlayer.User : null));
+        pack.AddPostEffect(
+            () =>
+                EcoSim.PlantSim.DestroyPlant(
+                    this,
+                    DeathType.Harvesting,
+                    killer: damager is Player damagerPlayer ? damagerPlayer.User : null
+                )
+        );
         return pack;
     }
 
-    private GameActionPack TryDamageUnfelledTree(GameActionPack pack, INetObject damager, float amount, InteractionContext context)
+    private GameActionPack TryDamageUnfelledTree(
+        GameActionPack pack,
+        INetObject damager,
+        float amount,
+        InteractionContext context
+    )
     {
         var user = (damager as Player)?.User;
-        if (this.health <= 0) return pack;
+        if (this.health <= 0)
+            return pack;
 
         pack.AddGameAction(this.CreateChopTreeAction(context, this.health <= amount));
 
         pack.AddPostEffect(() =>
-        { 
+        {
             // damage trunk
             var damageDone = InterlockedUtils.SubMinNonNegative(ref this.health, amount);
-            if (damageDone <= 0f) return;
+            if (damageDone <= 0f)
+                return;
 
             this.RPC("UpdateHP", this.health / this.Species.TreeHealth);
 
@@ -551,63 +740,82 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
                 this.health = 0;
                 this.FellTree(damager);
                 EcoSim.PlantSim.KillPlant(this, DeathType.Logging, true);
-				
-				//if logging skil >= 0 then auto destroy stump
-                
+
+                //if logging skil >= 0 then auto destroy stump
+
                 {
                     var player = damager as Player;
                     var changes = InventoryChangeSet.New(player.User.Inventory, player.User);
                     var trunkResources = this.Species.TrunkResources;
-                    if (trunkResources != null) trunkResources.ForEach(x => changes.AddItems(x.Key, x.Value.RandInt));
-                    else DebugUtils.Fail("Trunk resources missing for: " + this.Species.Name);
+                    if (trunkResources != null)
+                        trunkResources.ForEach(x => changes.AddItems(x.Key, x.Value.RandInt));
+                    else
+                        DebugUtils.Fail("Trunk resources missing for: " + this.Species.Name);
                     changes.TryApply();
-                    if (World.GetBlock(this.Position.XYZi).GetType() == this.Species.BlockType) World.DeleteBlock(this.Position.XYZi);
+                    if (World.GetBlock(this.Position.XYZi).GetType() == this.Species.BlockType)
+                        World.DeleteBlock(this.Position.XYZi);
                     this.stumpHealth = 0;
                     this.RPC("DestroyStump");
                     EcoSim.PlantSim.UpRootPlant(this);
                     this.CheckDestroy();
                 }
-				
             }
 
-            if (user != null) (context.SelectedItem as ToolItem)?.AddExperience(user, DamageExperienceMultiplier * damageDone, Localizer.Do($"felling {Localizer.A(this.Species.DisplayName).AppendSpaceIfSet()}{this.Species.UILink()}" /*c: should be unisex translations. e.g.: "you earned xp felling {a/an} {Redwood/Oak}."*/));
+            if (user != null)
+                (context.SelectedItem as ToolItem)?.AddExperience(
+                    user,
+                    DamageExperienceMultiplier * damageDone,
+                    Localizer.Do(
+                        $"felling {Localizer.A(this.Species.DisplayName).AppendSpaceIfSet()}{this.Species.UILink()}" /*c: should be unisex translations. e.g.: "you earned xp felling {a/an} {Redwood/Oak}."*/
+                    )
+                );
 
             this.MarkDirty();
         });
         return pack;
     }
 
-    private GameActionPack TryDamageStump(GameActionPack pack, INetObject damager, float amount, InteractionContext context)
+    private GameActionPack TryDamageStump(
+        GameActionPack pack,
+        INetObject damager,
+        float amount,
+        InteractionContext context
+    )
     {
         if (this.Fallen && this.stumpHealth > 0)
         {
             var player = damager as Player;
             if (player != null)
             {
-                pack.AddGameAction(new ChopStump()
-                {
-                    Citizen        = player.User,
-                    ActionLocation = this.Position.XYZi,
-                    Destroyed      = this.stumpHealth <= amount,
-                    TreeSpecies    = this.Species.GetType()
-                });
+                pack.AddGameAction(
+                    new ChopStump()
+                    {
+                        Citizen = player.User,
+                        ActionLocation = this.Position.XYZi,
+                        Destroyed = this.stumpHealth <= amount,
+                        TreeSpecies = this.Species.GetType()
+                    }
+                );
             }
 
             pack.AddPostEffect(() =>
-            { 
+            {
                 this.stumpHealth = Mathf.Max(0, this.stumpHealth - amount);
 
                 if (this.stumpHealth <= 0)
                 {
-                    if (World.GetBlock(this.Position.XYZi).GetType() == this.Species.BlockType) World.DeleteBlock(this.Position.XYZi);
+                    if (World.GetBlock(this.Position.XYZi).GetType() == this.Species.BlockType)
+                        World.DeleteBlock(this.Position.XYZi);
                     this.stumpHealth = 0;
                     //give tree resources
                     if (player != null)
                     {
                         var changes = InventoryChangeSet.New(player.User.Inventory, player.User);
                         var trunkResources = this.Species.TrunkResources;
-                        if (trunkResources != null) trunkResources.ForEach(x => changes.AddItems(x.Key, x.Value.RandInt));
-                        else DebugUtils.Fail("Trunk resources missing for: " + this.Species.Name);
+                        if (trunkResources != null)
+                            trunkResources.ForEach(x => changes.AddItems(x.Key, x.Value.RandInt));
+                        else
+                            DebugUtils.Fail("Trunk resources missing for: " + this.Species.Name);
                         changes.TryApply();
                     }
                     this.RPC("DestroyStump");
@@ -624,39 +832,56 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
         return pack;
     }
 
-    private GameActionPack TryDamageBranch(GameActionPack pack, INetObject damager, float amount, InteractionContext context)
+    private GameActionPack TryDamageBranch(
+        GameActionPack pack,
+        INetObject damager,
+        float amount,
+        InteractionContext context
+    )
     {
         int branchID = context.Parameters["branch"];
-        var branch   = this.branches[branchID];
+        var branch = this.branches[branchID];
 
         if (context.Parameters.ContainsKey("leaf")) // damage leaf
         {
-            int leafID = context.Parameters["leaf"];            
-            var leaf   = branch.Leaves[leafID];
+            int leafID = context.Parameters["leaf"];
+            var leaf = branch.Leaves[leafID];
 
             if (leaf.Health > 0)
             {
                 pack.AddGameAction(this.CreateChopTreeAction(context, false, true));
                 pack.AddPostEffect(() =>
                 {
-                    if ((leaf.Health = Mathf.Max(0, leaf.Health - amount)) == 0) this.RPC("DestroyLeaves", branchID, leafID);
+                    if ((leaf.Health = Mathf.Max(0, leaf.Health - amount)) == 0)
+                        this.RPC("DestroyLeaves", branchID, leafID);
                     this.MarkDirty();
                 });
             }
 
             return pack;
         }
-        else return this.TryDamageBranch(pack, branch, branchID, amount, context);
+        else
+            return this.TryDamageBranch(pack, branch, branchID, amount, context);
     }
 
-    private GameActionPack TryDamageBranch(GameActionPack pack, TreeBranch branch, int branchID, float amount, InteractionContext context)
+    private GameActionPack TryDamageBranch(
+        GameActionPack pack,
+        TreeBranch branch,
+        int branchID,
+        float amount,
+        InteractionContext context
+    )
     {
         if (branch != null && branch.Health > 0)
         {
             pack.AddGameAction(this.CreateChopTreeAction(context, false, true));
             pack.AddPostEffect(() =>
-            { 
-                if ((branch.Health = Mathf.Max(0, branch.Health - amount)) == 0) { this.RPC("DestroyBranch", branchID); this.MarkDirty(); }
+            {
+                if ((branch.Health = Mathf.Max(0, branch.Health - amount)) == 0)
+                {
+                    this.RPC("DestroyBranch", branchID);
+                    this.MarkDirty();
+                }
             });
         }
         return pack;
@@ -776,7 +1001,10 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
                 // Still relevant, Check if viewer would be a better controller
                 if (this.Controller == null)
                     this.SetPhysicsController(viewer);
-                else if (this.Controller != viewer && Vector2.WrappedDistance(observer.Position.XZ, this.Position.XZ) < 10f)
+                else if (
+                    this.Controller != viewer
+                    && Vector2.WrappedDistance(observer.Position.XZ, this.Position.XZ) < 10f
+                )
                 {
                     IWorldObserver other = this.Controller as IWorldObserver;
                     if (Vector2.WrappedDistance(other.Position.XZ, this.Position.XZ) > 15f)
@@ -816,10 +1044,12 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
 
     public override bool IsUpdated(INetObjectViewer viewer)
     {
-        if (this.LastUpdateTime > viewer.LastSentUpdateTime && SleepManager.Obj.AcceleratingTime) return true;
-        return this.Fallen && this.trunkPieces.Any(piece => !piece.Collected) && this.LastUpdateTime > viewer.LastSentUpdateTime;
+        if (this.LastUpdateTime > viewer.LastSentUpdateTime && SleepManager.Obj.AcceleratingTime)
+            return true;
+        return this.Fallen
+            && this.trunkPieces.Any(piece => !piece.Collected)
+            && this.LastUpdateTime > viewer.LastSentUpdateTime;
     }
-
 
     public override void Destroy()
     {
@@ -838,9 +1068,17 @@ public class TreeEntity : Tree, IInteractableObject, IDamageable, IMinimapObject
         base.Destroy();
     }
 
-    bool IInteractionChecker.CanInteract(Vector3 objectPosition, Vector3 interactPosition, InteractionInfo info) => this.CanInteract(objectPosition, interactPosition, info);
+    bool IInteractionChecker.CanInteract(
+        Vector3 objectPosition,
+        Vector3 interactPosition,
+        InteractionInfo info
+    ) => this.CanInteract(objectPosition, interactPosition, info);
 
-    protected virtual bool CanInteract(Vector3 objectPosition, Vector3 interactPosition, InteractionInfo info)
+    protected virtual bool CanInteract(
+        Vector3 objectPosition,
+        Vector3 interactPosition,
+        InteractionInfo info
+    )
     {
         TrunkPiece trunk = null;
         if (info.Parameters != null)

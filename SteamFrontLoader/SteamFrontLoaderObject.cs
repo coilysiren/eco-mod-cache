@@ -20,13 +20,12 @@ namespace Eco.Mods.TechTree
     using System;
     using System.Linq;
 
-
-
     public class SteamFrontLoaderUtilities
     {
         // Mapping for custom stack sizes in vehicles by vehicle type as key
         // We can have different stack sizes in different vehicles with this
-        public static Dictionary<Type, StackLimitTypeRestriction> AdvancedVehicleStackSizeMap = new Dictionary<Type, StackLimitTypeRestriction>();
+        public static Dictionary<Type, StackLimitTypeRestriction> AdvancedVehicleStackSizeMap =
+            new Dictionary<Type, StackLimitTypeRestriction>();
 
         static SteamFrontLoaderUtilities() => CreateBlockStackSizeMaps();
 
@@ -37,15 +36,21 @@ namespace Eco.Mods.TechTree
             // SteamFrontLoader
             var SteamFrontLoaderMap = new StackLimitTypeRestriction(true, 30);
 
-            SteamFrontLoaderMap.AddListRestriction(blockItems.GetItemsByBlockAttribute<Diggable>(), 20);
-            SteamFrontLoaderMap.AddListRestriction(blockItems.GetItemsByBlockAttribute<Minable>(), 0);
-
+            SteamFrontLoaderMap.AddListRestriction(
+                blockItems.GetItemsByBlockAttribute<Diggable>(),
+                20
+            );
+            SteamFrontLoaderMap.AddListRestriction(
+                blockItems.GetItemsByBlockAttribute<Minable>(),
+                0
+            );
 
             // SteamFrontLoader
             AdvancedVehicleStackSizeMap.Add(typeof(SteamFrontLoaderObject), SteamFrontLoaderMap);
         }
 
-        public static StackLimitTypeRestriction GetInventoryRestriction(object obj) => AdvancedVehicleStackSizeMap.GetOrDefault(obj.GetType());
+        public static StackLimitTypeRestriction GetInventoryRestriction(object obj) =>
+            AdvancedVehicleStackSizeMap.GetOrDefault(obj.GetType());
     }
 
     [Serialized]
@@ -59,19 +64,23 @@ namespace Eco.Mods.TechTree
     public class SteamFrontLoaderObject : PhysicsWorldObject
     {
         protected SteamFrontLoaderObject() { }
-        public override LocString DisplayName                     { get { return Localizer.DoStr("Steam Front Loader"); } }
+
+        public override LocString DisplayName
+        {
+            get { return Localizer.DoStr("Steam Front Loader"); }
+        }
 
         static SteamFrontLoaderObject()
         {
             WorldObject.AddOccupancy<SteamFrontLoaderObject>(new List<BlockOccupancy>(0));
         }
 
-        private static string[] fuelTagList = new string[]
-        {
-            "Burnable Fuel"
-        };
+        private static string[] fuelTagList = new string[] { "Burnable Fuel" };
 
-        private Player Driver { get { return this.GetComponent<VehicleComponent>().Driver; } }
+        private Player Driver
+        {
+            get { return this.GetComponent<VehicleComponent>().Driver; }
+        }
 
         protected override void Initialize()
         {
@@ -81,8 +90,17 @@ namespace Eco.Mods.TechTree
             this.GetComponent<FuelConsumptionComponent>().Initialize(25);
             this.GetComponent<AirPollutionComponent>().Initialize(0.5f);
             this.GetComponent<VehicleComponent>().Initialize(12, 1.2f, 1);
-            this.GetComponent<VehicleToolComponent>().Initialize(4, 700000, new DirtItem(),
-                100, 200, 0, SteamFrontLoaderUtilities.GetInventoryRestriction(this), toolOnMount:true);
+            this.GetComponent<VehicleToolComponent>()
+                .Initialize(
+                    4,
+                    700000,
+                    new DirtItem(),
+                    100,
+                    200,
+                    0,
+                    SteamFrontLoaderUtilities.GetInventoryRestriction(this),
+                    toolOnMount: true
+                );
         }
     }
 }

@@ -25,21 +25,32 @@ namespace Eco.Mods.TechTree
     public partial class SteelBigShovelItem : BigShovelItem
     {
         // Static values
-        private static IDynamicValue        caloriesBurn        = new MultiDynamicValue(MultiDynamicOps.Multiply, new TalentModifiedValue(typeof(SteelBigShovelItem), typeof(ToolEfficiencyTalent)), CreateCalorieValue(15, typeof(SelfImprovementSkill), typeof(SteelBigShovelItem)));
-        private static IDynamicValue        tier                = new ConstantValue(3);
-        private static SkillModifiedValue   skilledRepairCost   = new(8, AdvancedSmeltingSkill.MultiplicativeStrategy, typeof(AdvancedSmeltingSkill), Localizer.DoStr("repair cost"), DynamicValueType.Efficiency);
+        private static IDynamicValue caloriesBurn = new MultiDynamicValue(
+            MultiDynamicOps.Multiply,
+            new TalentModifiedValue(typeof(SteelBigShovelItem), typeof(ToolEfficiencyTalent)),
+            CreateCalorieValue(15, typeof(SelfImprovementSkill), typeof(SteelBigShovelItem))
+        );
+        private static IDynamicValue tier = new ConstantValue(3);
+        private static SkillModifiedValue skilledRepairCost =
+            new(
+                8,
+                AdvancedSmeltingSkill.MultiplicativeStrategy,
+                typeof(AdvancedSmeltingSkill),
+                Localizer.DoStr("repair cost"),
+                DynamicValueType.Efficiency
+            );
 
         // Tool overrides
 
-        public override IDynamicValue       CaloriesBurn        => caloriesBurn;
-        public override IDynamicValue       Tier                => tier;
-        public override IDynamicValue       SkilledRepairCost   => skilledRepairCost;
-        public override float               DurabilityRate      => DurabilityMax / 1000f;
-        public override Item                RepairItem          => Item.Get<SteelBarItem>();
-        public override int                 FullRepairAmount    => 8;
+        public override IDynamicValue CaloriesBurn => caloriesBurn;
+        public override IDynamicValue Tier => tier;
+        public override IDynamicValue SkilledRepairCost => skilledRepairCost;
+        public override float DurabilityRate => DurabilityMax / 1000f;
+        public override Item RepairItem => Item.Get<SteelBarItem>();
+        public override int FullRepairAmount => 8;
 
         //Set this to the desired value you would like the shovels to pick up
-        public override int                 MaxTake             => 40;
+        public override int MaxTake => 40;
 
         public SteelBigShovelItem() { }
     }
@@ -57,14 +68,30 @@ namespace Eco.Mods.TechTree
                     Localizer.DoStr("Steel Big Shovel"),
                     new IngredientElement[]
                     {
-               new IngredientElement(typeof(SteelBarItem), 15, typeof(AdvancedSmeltingSkill), typeof(AdvancedSmeltingLavishResourcesTalent)),
-               new IngredientElement("Lumber", 10, typeof(AdvancedSmeltingSkill), typeof(AdvancedSmeltingLavishResourcesTalent)),
+                        new IngredientElement(
+                            typeof(SteelBarItem),
+                            15,
+                            typeof(AdvancedSmeltingSkill),
+                            typeof(AdvancedSmeltingLavishResourcesTalent)
+                        ),
+                        new IngredientElement(
+                            "Lumber",
+                            10,
+                            typeof(AdvancedSmeltingSkill),
+                            typeof(AdvancedSmeltingLavishResourcesTalent)
+                        ),
                     },
-                new CraftingElement<SteelBigShovelItem>()
+                    new CraftingElement<SteelBigShovelItem>()
                 )
             };
             this.LaborInCalories = CreateLaborInCaloriesValue(250, typeof(AdvancedSmeltingSkill));
-            this.CraftMinutes = CreateCraftTimeValue(typeof(SteelBigShovelRecipe), 0.5f, typeof(AdvancedSmeltingSkill), typeof(AdvancedSmeltingFocusedSpeedTalent), typeof(AdvancedSmeltingParallelSpeedTalent));
+            this.CraftMinutes = CreateCraftTimeValue(
+                typeof(SteelBigShovelRecipe),
+                0.5f,
+                typeof(AdvancedSmeltingSkill),
+                typeof(AdvancedSmeltingFocusedSpeedTalent),
+                typeof(AdvancedSmeltingParallelSpeedTalent)
+            );
             this.Initialize(Localizer.DoStr("Steel Big Shovel"), typeof(SteelBigShovelRecipe));
             CraftingComponent.AddRecipe(typeof(AnvilObject), this);
         }
