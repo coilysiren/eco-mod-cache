@@ -20,33 +20,33 @@ using Eco.Gameplay.Pipes;
 
 namespace Eco.Mods.TechTree
 {
-    [RequiresSkill(typeof(LoggingSkill), 4)]
-    public partial class HewnCharcoalRecipe : RecipeFamily
+  [RequiresSkill(typeof(LoggingSkill), 4)]
+  public partial class HewnCharcoalRecipe : RecipeFamily
+  {
+    public HewnCharcoalRecipe()
     {
-        public HewnCharcoalRecipe()
-        {
-            this.Recipes = new List<Recipe>
-            {
-                new Recipe(
-                    "HewnCharcoal",
-                    Localizer.DoStr("Hewn Charcoal"),
-                    new List<IngredientElement>
-                    {
-                        new IngredientElement("HewnLog", 7, typeof(LoggingSkill)),
-                    },
-                    new List<CraftingElement> { new CraftingElement<CharcoalItem>() }
-                )
-            };
+      this.Recipes = new List<Recipe> {
+				new Recipe(
+					"HewnCharcoal",
+					Localizer.DoStr("Hewn Charcoal"),
+					new IngredientElement[] {
+						new IngredientElement("HewnLog", 7, typeof(LoggingSkill)),
+					},
+					new CraftingElement[] {
+						new CraftingElement<CharcoalItem>()
+					}
+				)
+			};
 
-            this.ExperienceOnCraft = 1;
-            this.LaborInCalories = CreateLaborInCaloriesValue(25, typeof(LoggingSkill));
-            this.CraftMinutes = CreateCraftTimeValue(
-                typeof(HewnCharcoalRecipe),
-                1,
-                typeof(LoggingSkill)
-            );
-            this.Initialize(Localizer.DoStr("Hewn Charcoal"), typeof(HewnCharcoalRecipe));
-            CraftingComponent.AddRecipe(typeof(KilnObject), this);
-        }
+      this.ExperienceOnCraft = 1;
+      this.LaborInCalories = CreateLaborInCaloriesValue(25, typeof(LoggingSkill));
+      this.CraftMinutes = CreateCraftTimeValue(
+          typeof(HewnCharcoalRecipe),
+          1,
+          typeof(LoggingSkill)
+      );
+      this.Initialize(Localizer.DoStr("Hewn Charcoal"), typeof(HewnCharcoalRecipe));
+      CraftingComponent.AddRecipe(typeof(KilnObject), this);
     }
+  }
 }
