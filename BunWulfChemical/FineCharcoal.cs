@@ -21,31 +21,30 @@ using Eco.Gameplay.Pipes;
 namespace Eco.Mods.TechTree
 {
     [RequiresSkill(typeof(LoggingSkill), 4)]
-    public partial class HewnCharcoalRecipe : RecipeFamily
+    public partial class FineCharcoalRecipe : RecipeFamily
     {
-        public HewnCharcoalRecipe()
+        public FineCharcoalRecipe()
         {
             this.Recipes = new List<Recipe>
             {
                 new Recipe(
-                    "HewnCharcoal",
-                    Localizer.DoStr("Hewn Charcoal"),
+                    "FineCharcoal",
+                    Localizer.DoStr("Fine Charcoal"),
                     new IngredientElement[]
                     {
                         new IngredientElement("HewnLog", 7, typeof(LoggingSkill)),
                     },
-                    new CraftingElement[] { new CraftingElement<CharcoalItem>() }
+                    new CraftingElement[] { new CraftingElement<CharcoalItem>(1) }
                 )
             };
-
             this.ExperienceOnCraft = 1;
             this.LaborInCalories = CreateLaborInCaloriesValue(25, typeof(LoggingSkill));
             this.CraftMinutes = CreateCraftTimeValue(
-                typeof(HewnCharcoalRecipe),
+                typeof(FineCharcoalRecipe),
                 1,
                 typeof(LoggingSkill)
             );
-            this.Initialize(Localizer.DoStr("Hewn Charcoal"), typeof(HewnCharcoalRecipe));
+            this.Initialize(Localizer.DoStr("Fine Charcoal"), typeof(FineCharcoalRecipe));
             CraftingComponent.AddRecipe(typeof(KilnObject), this);
         }
     }
